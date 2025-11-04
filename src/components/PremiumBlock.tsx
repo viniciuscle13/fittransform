@@ -1,9 +1,7 @@
 "use client"
 
-import { Lock, Star, Crown, CreditCard } from 'lucide-react'
-import { useState } from 'react'
-import { createPremiumPayment } from '@/lib/payment'
-import { getCurrentUser } from '@/lib/auth'
+import { Lock, Star, Crown } from 'lucide-react'
+import { redirectToPayment } from '@/lib/payment'
 
 interface PremiumBlockProps {
   title: string
@@ -12,33 +10,9 @@ interface PremiumBlockProps {
 }
 
 export default function PremiumBlock({ title, description, onUpgrade }: PremiumBlockProps) {
-  const [loading, setLoading] = useState(false)
-
-  const handleUpgradeClick = async () => {
-    setLoading(true)
-    
-    try {
-      const user = await getCurrentUser()
-      if (!user) {
-        alert('Faça login primeiro para assinar o Premium')
-        setLoading(false)
-        return
-      }
-
-      const payment = await createPremiumPayment(user.email, user.id)
-      
-      if (payment.success) {
-        // Redirecionar para o checkout do Mercado Pago
-        window.location.href = payment.initPoint
-      } else {
-        alert('Erro ao processar pagamento. Tente novamente.')
-      }
-    } catch (error) {
-      console.error('Erro ao criar pagamento:', error)
-      alert('Erro ao processar pagamento. Tente novamente.')
-    } finally {
-      setLoading(false)
-    }
+  const handleUpgradeClick = () => {
+    // Redirecionar diretamente para o Mercado Pago
+    redirectToPayment()
   }
 
   return (
@@ -81,25 +55,10 @@ export default function PremiumBlock({ title, description, onUpgrade }: PremiumB
       
       <button
         onClick={handleUpgradeClick}
-        disabled={loading}
-        className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-3 rounded-full font-semibold hover:from-orange-600 hover:to-red-700 transition-colors transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+        className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-3 rounded-full font-semibold hover:from-orange-600 hover:to-red-700 transition-colors transform hover:scale-105"
       >
-        {loading ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            Processando...
-          </>
-        ) : (
-          <>
-            <CreditCard className="w-4 h-4" />
-            Upgrade para Premium - R$ 19,90/mês
-          </>
-        )}
+        Upgrade para Premium - R$ 19,90/mês
       </button>
-      
-      <div className="mt-4 text-xs text-gray-500">
-        Pagamento seguro via Mercado Pago
-      </div>
     </div>
   )
 }

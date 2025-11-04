@@ -1,6 +1,7 @@
 "use client"
 
 import { Play, Lock } from 'lucide-react'
+import { redirectToPayment } from '@/lib/payment'
 
 interface PremiumVideoProps {
   title: string
@@ -14,8 +15,8 @@ export default function PremiumVideo({ title, description, videoUrl }: PremiumVi
       // Se tiver URL do vídeo, abrir em nova aba
       window.open(videoUrl, '_blank')
     } else {
-      // Se não tiver vídeo, mostrar mensagem
-      alert('Vídeo Premium em breve! 🎬')
+      // Se não tiver vídeo, mostrar que é premium
+      redirectToPayment()
     }
   }
 

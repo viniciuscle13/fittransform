@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { redirectToPayment } from '@/lib/payment'
-import { X, Lock, Star, Check, CreditCard, AlertCircle } from 'lucide-react'
+import { X, Lock, Star, Check, CreditCard } from 'lucide-react'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -14,7 +14,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
-  const [view, setView] = useState<'auth' | 'premium'>('premium') // Começar direto no premium
+  const [view, setView] = useState<'auth' | 'premium'>('auth')
   const [loading, setLoading] = useState(false)
 
   if (!isOpen) return null
@@ -39,8 +39,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     }
   }
 
-  const supabaseConfigured = isSupabaseConfigured()
-
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -59,83 +57,67 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
           {view === 'auth' ? (
             <div>
-              {supabaseConfigured ? (
-                <Auth
-                  supabaseClient={supabase}
-                  appearance={{
-                    theme: ThemeSupa,
-                    variables: {
-                      default: {
-                        colors: {
-                          brand: '#9333ea',
-                          brandAccent: '#7c3aed',
-                        },
+              <Auth
+                supabaseClient={supabase}
+                appearance={{
+                  theme: ThemeSupa,
+                  variables: {
+                    default: {
+                      colors: {
+                        brand: '#9333ea',
+                        brandAccent: '#7c3aed',
                       },
                     },
-                  }}
-                  providers={['google']}
-                  redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
-                  onlyThirdPartyProviders={false}
-                  magicLink={true}
-                  showLinks={true}
-                  localization={{
-                    variables: {
-                      sign_up: {
-                        email_label: 'Email',
-                        password_label: 'Senha',
-                        email_input_placeholder: 'Seu email',
-                        password_input_placeholder: 'Sua senha',
-                        button_label: 'Criar conta',
-                        loading_button_label: 'Criando conta...',
-                        social_provider_text: 'Entrar com {{provider}}',
-                        link_text: 'Não tem conta? Cadastre-se',
-                        confirmation_text: 'Verifique seu email para confirmar a conta'
-                      },
-                      sign_in: {
-                        email_label: 'Email',
-                        password_label: 'Senha',
-                        email_input_placeholder: 'Seu email',
-                        password_input_placeholder: 'Sua senha',
-                        button_label: 'Entrar',
-                        loading_button_label: 'Entrando...',
-                        social_provider_text: 'Entrar com {{provider}}',
-                        link_text: 'Já tem conta? Entre aqui'
-                      },
-                      magic_link: {
-                        email_input_label: 'Email',
-                        email_input_placeholder: 'Seu email',
-                        button_label: 'Enviar link mágico',
-                        loading_button_label: 'Enviando...',
-                        link_text: 'Enviar um link mágico por email',
-                        confirmation_text: 'Verifique seu email para o link de acesso'
-                      },
-                      forgotten_password: {
-                        email_label: 'Email',
-                        password_label: 'Senha',
-                        email_input_placeholder: 'Seu email',
-                        button_label: 'Enviar instruções',
-                        loading_button_label: 'Enviando...',
-                        link_text: 'Esqueceu sua senha?',
-                        confirmation_text: 'Verifique seu email para redefinir a senha'
-                      }
+                  },
+                }}
+                providers={['google']}
+                redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
+                onlyThirdPartyProviders={false}
+                magicLink={true}
+                showLinks={true}
+                localization={{
+                  variables: {
+                    sign_up: {
+                      email_label: 'Email',
+                      password_label: 'Senha',
+                      email_input_placeholder: 'Seu email',
+                      password_input_placeholder: 'Sua senha',
+                      button_label: 'Criar conta',
+                      loading_button_label: 'Criando conta...',
+                      social_provider_text: 'Entrar com {{provider}}',
+                      link_text: 'Não tem conta? Cadastre-se',
+                      confirmation_text: 'Verifique seu email para confirmar a conta'
+                    },
+                    sign_in: {
+                      email_label: 'Email',
+                      password_label: 'Senha',
+                      email_input_placeholder: 'Seu email',
+                      password_input_placeholder: 'Sua senha',
+                      button_label: 'Entrar',
+                      loading_button_label: 'Entrando...',
+                      social_provider_text: 'Entrar com {{provider}}',
+                      link_text: 'Já tem conta? Entre aqui'
+                    },
+                    magic_link: {
+                      email_input_label: 'Email',
+                      email_input_placeholder: 'Seu email',
+                      button_label: 'Enviar link mágico',
+                      loading_button_label: 'Enviando...',
+                      link_text: 'Enviar um link mágico por email',
+                      confirmation_text: 'Verifique seu email para o link de acesso'
+                    },
+                    forgotten_password: {
+                      email_label: 'Email',
+                      password_label: 'Senha',
+                      email_input_placeholder: 'Seu email',
+                      button_label: 'Enviar instruções',
+                      loading_button_label: 'Enviando...',
+                      link_text: 'Esqueceu sua senha?',
+                      confirmation_text: 'Verifique seu email para redefinir a senha'
                     }
-                  }}
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Autenticação Indisponível</h3>
-                  <p className="text-gray-600 mb-4">
-                    O sistema de login não está configurado no momento.
-                  </p>
-                  <button
-                    onClick={() => setView('premium')}
-                    className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    Ver Planos Premium
-                  </button>
-                </div>
-              )}
+                  }
+                }}
+              />
               
               <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="flex items-center gap-2 mb-2">
@@ -220,14 +202,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 </div>
               </div>
 
-              {supabaseConfigured && (
-                <button
-                  onClick={() => setView('auth')}
-                  className="w-full text-purple-600 hover:text-purple-700 transition-colors"
-                >
-                  ← Voltar para login
-                </button>
-              )}
+              <button
+                onClick={() => setView('auth')}
+                className="w-full text-purple-600 hover:text-purple-700 transition-colors"
+              >
+                ← Voltar para login
+              </button>
             </div>
           )}
         </div>

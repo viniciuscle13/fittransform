@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabase'
+import { supabase } from './supabase'
 
 export interface User {
   id: string
@@ -9,15 +9,6 @@ export interface User {
 
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    // Se Supabase não está configurado, retorna usuário demo
-    if (!isSupabaseConfigured()) {
-      return {
-        id: 'demo-user',
-        email: 'demo@example.com',
-        is_premium: false
-      }
-    }
-
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error || !user) {
@@ -75,10 +66,6 @@ export const getCurrentUser = async (): Promise<User | null> => {
 }
 
 export const signOut = async () => {
-  if (!isSupabaseConfigured()) {
-    return // Não faz nada se não está configurado
-  }
-
   const { error } = await supabase.auth.signOut()
   if (error) {
     console.error('Error signing out:', error)
@@ -104,11 +91,6 @@ export const checkPremiumStatus = (user: User | null): boolean => {
 
 // Função para atualizar status premium do usuário
 export const updatePremiumStatus = async (userId: string, isPremium: boolean, expiresAt?: string) => {
-  if (!isSupabaseConfigured()) {
-    console.log('Supabase não configurado - simulando atualização premium')
-    return
-  }
-
   const { error } = await supabase
     .from('profiles')
     .update({
