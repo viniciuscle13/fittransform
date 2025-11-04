@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Calculator, Dumbbell, Apple, Trophy, Calendar, Home, Menu, X, Play, Clock, Target, CheckCircle, Star, Users, TrendingUp, CreditCard, Zap, User, LogOut, Crown, Lock } from 'lucide-react'
 import { getCurrentUser, signOut, checkPremiumStatus, User as UserType } from '@/lib/auth'
+import { createPremiumPayment } from '@/lib/payment'
 import AuthModal from '@/components/AuthModal'
 import PremiumBlock from '@/components/PremiumBlock'
 import PremiumVideo from '@/components/PremiumVideo'
@@ -13,6 +14,7 @@ export default function FitnessSite() {
   const [user, setUser] = useState<UserType | null>(null)
   const [loading, setLoading] = useState(true)
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [paymentLoading, setPaymentLoading] = useState(false)
   
   // Estados para calculadora de gordura corporal
   const [gender, setGender] = useState('male')
@@ -66,12 +68,28 @@ export default function FitnessSite() {
     }
   }
 
-  const handleUpgradeClick = () => {
+  const handleUpgradeClick = async () => {
     if (!user) {
       setAuthModalOpen(true)
-    } else {
-      // Redirecionar para pagamento
-      alert('Redirecionando para pagamento Stripe...')
+      return
+    }
+
+    setPaymentLoading(true)
+    
+    try {
+      const payment = await createPremiumPayment(user.email, user.id)
+      
+      if (payment.success) {
+        // Redirecionar para o checkout do Mercado Pago
+        window.location.href = payment.initPoint
+      } else {
+        alert('Erro ao processar pagamento. Tente novamente.')
+      }
+    } catch (error) {
+      console.error('Erro ao criar pagamento:', error)
+      alert('Erro ao processar pagamento. Tente novamente.')
+    } finally {
+      setPaymentLoading(false)
     }
   }
 
@@ -535,10 +553,20 @@ export default function FitnessSite() {
             </button>
             <button 
               onClick={handleUpgradeClick}
-              className="bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/30 transition-all flex items-center gap-2"
+              disabled={paymentLoading}
+              className="bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <CreditCard className="w-5 h-5" />
-              Assinar Premium
+              {paymentLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-5 h-5" />
+                  Assinar Premium
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -623,9 +651,10 @@ export default function FitnessSite() {
                 </div>
                 <button 
                   onClick={handleUpgradeClick}
-                  className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
+                  disabled={paymentLoading}
+                  className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Upgrade para Premium
+                  {paymentLoading ? 'Processando...' : 'Upgrade para Premium'}
                 </button>
               </div>
             )}
@@ -672,9 +701,20 @@ export default function FitnessSite() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
             onClick={handleUpgradeClick}
-            className="bg-white text-orange-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 transition-colors"
+            disabled={paymentLoading}
+            className="bg-white text-orange-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
           >
-            Assinar Agora - R$ 19,90/mês
+            {paymentLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600"></div>
+                Processando...
+              </>
+            ) : (
+              <>
+                <CreditCard className="w-5 h-5" />
+                Assinar Agora - R$ 19,90/mês
+              </>
+            )}
           </button>
         </div>
       </section>

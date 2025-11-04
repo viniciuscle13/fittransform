@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export interface User {
   id: string
@@ -9,6 +9,15 @@ export interface User {
 
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
+    // Se Supabase não está configurado, retorna usuário demo
+    if (!isSupabaseConfigured()) {
+      return {
+        id: 'demo-user',
+        email: 'demo@example.com',
+        is_premium: false
+      }
+    }
+
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error || !user) {
@@ -16,13 +25,36 @@ export const getCurrentUser = async (): Promise<User | null> => {
     }
 
     // Buscar dados do usuário na tabela profiles
-    const { data: profile, error: profileError } = await supabase
+    let { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile) {
+    // Se não existe perfil, criar um
+    if (profileError && profileError.code === 'PGRST116') {
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email,
+          is_premium: false
+        })
+        .select()
+        .single()
+
+      if (createError) {
+        console.error('Error creating profile:', createError)
+        return {
+          id: user.id,
+          email: user.email || '',
+          is_premium: false
+        }
+      }
+
+      profile = newProfile
+    } else if (profileError) {
+      console.error('Error fetching profile:', profileError)
       return {
         id: user.id,
         email: user.email || '',
@@ -33,8 +65,8 @@ export const getCurrentUser = async (): Promise<User | null> => {
     return {
       id: user.id,
       email: user.email || '',
-      is_premium: profile.is_premium || false,
-      premium_expires_at: profile.premium_expires_at
+      is_premium: profile?.is_premium || false,
+      premium_expires_at: profile?.premium_expires_at
     }
   } catch (error) {
     console.error('Error getting current user:', error)
@@ -43,6 +75,10 @@ export const getCurrentUser = async (): Promise<User | null> => {
 }
 
 export const signOut = async () => {
+  if (!isSupabaseConfigured()) {
+    return // Não faz nada se não está configurado
+  }
+
   const { error } = await supabase.auth.signOut()
   if (error) {
     console.error('Error signing out:', error)
@@ -64,4 +100,40 @@ export const checkPremiumStatus = (user: User | null): boolean => {
 
   // Se não tem data de expiração, considerar premium permanente
   return true
+}
+
+// Função para atualizar status premium do usuário
+export const updatePremiumStatus = async (userId: string, isPremium: boolean, expiresAt?: string) => {
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase não configurado - simulando atualização premium')
+    return
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      is_premium: isPremium,
+      premium_expires_at: expiresAt,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Error updating premium status:', error)
+    throw error
+  }
+}
+
+// Função para simular upgrade premium (para demonstração)
+export const simulatePremiumUpgrade = async (userId: string) => {
+  try {
+    const expirationDate = new Date()
+    expirationDate.setMonth(expirationDate.getMonth() + 1) // 1 mês
+    
+    await updatePremiumStatus(userId, true, expirationDate.toISOString())
+    return true
+  } catch (error) {
+    console.error('Error simulating premium upgrade:', error)
+    return false
+  }
 }
